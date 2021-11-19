@@ -32,7 +32,10 @@ namespace FDILink
 #define INSGPS_LEN 0x54 //84
 #define PI 3.141592653589793
 #define DEG_TO_RAD 0.017453292519943295
-
+// Sample covariance
+#define IMU_MAG_COV 0.1
+#define IMU_GYRO_COV 0.1
+#define IMU_ACCEL_COV 0.5
 
 class ahrsBringup
 {

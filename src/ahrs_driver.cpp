@@ -6,12 +6,12 @@ ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20)
 {
   ros::NodeHandle pravite_nh("~");
   //topic_name & frame_id
-  pravite_nh.param("debug",     if_debug_,  false);
+  pravite_nh.param("debug", if_debug_, false);
   pravite_nh.param("device_type", device_type_, 1); // default: single imu
   pravite_nh.param("imu_topic", imu_topic_, std::string("/imu"));
-  pravite_nh.param("imu_frame", imu_frame_id_, std::string("imu")); 
+  pravite_nh.param("imu_frame", imu_frame_id_, std::string("imu"));
   pravite_nh.param("mag_pose_2d_topic", mag_pose_2d_topic_, std::string("/mag_pose_2d"));
-  //serial                                                 
+  //serial
   pravite_nh.param("port", serial_port_, std::string("/dev/ttyTHS1")); 
   pravite_nh.param("baud", serial_baud_, 921600);
   //publisher
@@ -136,7 +136,7 @@ void ahrsBringup::processLoop()
       size_t ground_ignore_s = serial_.read(ground_ignore, (check_len[0]+4));
       continue;
     }
-    //read head sn 
+    //read head sn
     uint8_t check_sn[1] = {0xff};
     size_t sn_s = serial_.read(check_sn, 1);
     uint8_t head_crc8[1] = {0xff};
@@ -171,7 +171,7 @@ void ahrsBringup::processLoop()
         read_sn_  = imu_frame_.frame.header.serial_num - 1;
         frist_sn_ = true;
       }
-      //check sn 
+      //check sn
       ahrsBringup::checkSN(TYPE_IMU);
     }
     else if (head_type[0] == TYPE_AHRS)
@@ -215,7 +215,6 @@ void ahrsBringup::processLoop()
       {
         std::cout << "header_crc8 matched." << std::endl;
       }
-      
       ahrsBringup::checkSN(TYPE_INSGPS);
     }
     if (head_type[0] == TYPE_IMU)
@@ -240,7 +239,6 @@ void ahrsBringup::processLoop()
         bool if_right = ((int)head_crc16 == (int)CRC16);
         std::cout << "if_right: " << if_right << std::endl;
       }
-      
       if (head_crc16 != CRC16)
       {
         ROS_WARN("check crc16 faild(imu).");
@@ -251,7 +249,6 @@ void ahrsBringup::processLoop()
         ROS_WARN("check frame end.");
         continue;
       }
-      
     }
     else if (head_type[0] == TYPE_AHRS)
     {
@@ -275,7 +272,6 @@ void ahrsBringup::processLoop()
         bool if_right = ((int)head_crc16 == (int)CRC16);
         std::cout << "if_right: " << if_right << std::endl;
       }
-      
       if (head_crc16 != CRC16)
       {
         ROS_WARN("check crc16 faild(ahrs).");
@@ -302,9 +298,7 @@ void ahrsBringup::processLoop()
         ROS_WARN("check frame end.");
         continue;
       }
-      
     }
-
     // publish magyaw topic
     if (head_type[0] == TYPE_AHRS)
     {
@@ -316,19 +310,19 @@ void ahrsBringup::processLoop()
                                 ahrs_frame_.frame.data.data_pack.Qx,
                                 ahrs_frame_.frame.data.data_pack.Qy,
                                 ahrs_frame_.frame.data.data_pack.Qz);
-      Eigen::Quaterniond q_r =                          
-          Eigen::AngleAxisd( 3.14159, Eigen::Vector3d::UnitZ()) * 
-          Eigen::AngleAxisd( 3.14159, Eigen::Vector3d::UnitY()) * 
-          Eigen::AngleAxisd( 0.00000, Eigen::Vector3d::UnitX());
-      Eigen::Quaterniond q_rr =                          
-          Eigen::AngleAxisd( 0.00000, Eigen::Vector3d::UnitZ()) * 
-          Eigen::AngleAxisd( 0.00000, Eigen::Vector3d::UnitY()) * 
-          Eigen::AngleAxisd( 3.14159, Eigen::Vector3d::UnitX());
+      Eigen::Quaterniond q_r =
+          Eigen::AngleAxisd(  PI, Eigen::Vector3d::UnitZ()) * 
+          Eigen::AngleAxisd(  PI, Eigen::Vector3d::UnitY()) * 
+          Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitX());
+      Eigen::Quaterniond q_rr =
+          Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitZ()) * 
+          Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitY()) * 
+          Eigen::AngleAxisd(  PI, Eigen::Vector3d::UnitX());
       Eigen::Quaterniond q_xiao_rr =
-          Eigen::AngleAxisd( 3.14159/2, Eigen::Vector3d::UnitZ()) * 
-          Eigen::AngleAxisd( 0.00000, Eigen::Vector3d::UnitY()) * 
-          Eigen::AngleAxisd( 3.14159, Eigen::Vector3d::UnitX());
-      if (device_type_ == 0)         //未经变换的原始数据
+          Eigen::AngleAxisd( PI/2.0, Eigen::Vector3d::UnitZ()) * 
+          Eigen::AngleAxisd(    0.0, Eigen::Vector3d::UnitY()) * 
+          Eigen::AngleAxisd(     PI, Eigen::Vector3d::UnitX());
+      if (device_type_ == 0) //未经变换的原始数据
       {
         imu_data.orientation.w = ahrs_frame_.frame.data.data_pack.Qw;
         imu_data.orientation.x = ahrs_frame_.frame.data.data_pack.Qx;
@@ -341,9 +335,8 @@ void ahrsBringup::processLoop()
         imu_data.linear_acceleration.y = imu_frame_.frame.data.data_pack.accelerometer_y;
         imu_data.linear_acceleration.z = imu_frame_.frame.data.data_pack.accelerometer_z;
       }
-      else if (device_type_ == 1)    //imu单品ROS标准下的坐标变换
+      else if (device_type_ == 1) //imu单品ROS标准下的坐标变换
       {
-        
         Eigen::Quaterniond q_out =  q_r * q_ahrs * q_rr;
         imu_data.orientation.w = q_out.w();
         imu_data.orientation.x = q_out.x();
@@ -356,22 +349,30 @@ void ahrsBringup::processLoop()
         imu_data.linear_acceleration.y = imu_frame_.frame.data.data_pack.accelerometer_y;
         imu_data.linear_acceleration.z = imu_frame_.frame.data.data_pack.accelerometer_z;
       }
+      imu_data.orientation_covariance[0] = IMU_MAG_COV;
+      imu_data.orientation_covariance[4] = IMU_MAG_COV;
+      imu_data.orientation_covariance[8] = IMU_MAG_COV;
+      imu_data.angular_velocity_covariance[0] = IMU_GYRO_COV;
+      imu_data.angular_velocity_covariance[4] = IMU_GYRO_COV;
+      imu_data.angular_velocity_covariance[8] = IMU_GYRO_COV;
+      imu_data.linear_acceleration_covariance[0] = IMU_ACCEL_COV;
+      imu_data.linear_acceleration_covariance[4] = IMU_ACCEL_COV;
+      imu_data.linear_acceleration_covariance[8] = IMU_ACCEL_COV;
       imu_pub_.publish(imu_data);
-
       Eigen::Quaterniond rpy_q(imu_data.orientation.w,
                                imu_data.orientation.x,
                                imu_data.orientation.y,
                                imu_data.orientation.z);
       geometry_msgs::Pose2D pose_2d;
       double magx, magy, magz, roll, pitch;
-      if (device_type_ == 0){        //未经变换的原始数据//
+      if (device_type_ == 0){ //未经变换的原始数据//
         magx  = imu_frame_.frame.data.data_pack.magnetometer_x;
         magy  = imu_frame_.frame.data.data_pack.magnetometer_y;
         magz  = imu_frame_.frame.data.data_pack.magnetometer_z;
         roll  = ahrs_frame_.frame.data.data_pack.Roll;
         pitch = ahrs_frame_.frame.data.data_pack.Pitch;
       }
-      else if (device_type_ == 1){   //小车以及imu单品ROS标准下的坐标变换//
+      else if (device_type_ == 1){ //小车以及imu单品ROS标准下的坐标变换//
         magx  = -imu_frame_.frame.data.data_pack.magnetometer_x;
         magy  = imu_frame_.frame.data.data_pack.magnetometer_y;
         magz  = imu_frame_.frame.data.data_pack.magnetometer_z;
@@ -478,6 +479,5 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "ahrs_bringup");
   FDILink::ahrsBringup bp;
-
   return 0;
 }
