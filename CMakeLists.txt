@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 2.8)
-
 project(fdilink_ahrs)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")  
@@ -7,18 +6,18 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 find_package(Eigen3 REQUIRED)
 set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 find_package(catkin REQUIRED COMPONENTS
-  # message_generation
-  # genmsg
-  # geometry_msgs
   roscpp
-  rospy
   sensor_msgs
   std_msgs
   tf
-  # std_srvs
-  # nav_msgs
   serial
 )
+
+catkin_package(
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS roscpp sensor_msgs std_msgs tf serial
+)
+
 include_directories(
   include 
   src
@@ -26,15 +25,6 @@ include_directories(
   ${Eigen3_INCLUDE_DIRS} 
   
 )
-catkin_package(
-  CATKIN_DEPENDS
-  # message_runtimes
-#  INCLUDE_DIRS include
-#  LIBRARIES aicar_controller
-#  CATKIN_DEPENDS genmsg geometry_msgs roscpp rospy sensor_msgs std_msgs tf
-#  DEPENDS system_lib
-)
-
 # set(SERIAL_LIB /opt/ros/kinetic/lib/libserial.so)
 # set(SERIAL_LIB_PATH /opt/ros/kinetic/lib)
 # link_directories(${SERIAL_LIB_PATH})
