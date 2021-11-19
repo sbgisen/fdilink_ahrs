@@ -318,6 +318,10 @@ void ahrsBringup::processLoop()
           Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitZ()) * 
           Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitY()) * 
           Eigen::AngleAxisd(  PI, Eigen::Vector3d::UnitX());
+      Eigen::Quaterniond q_z =
+          Eigen::AngleAxisd(  PI, Eigen::Vector3d::UnitZ()) * 
+          Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitY()) * 
+          Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitX());
       Eigen::Quaterniond q_xiao_rr =
           Eigen::AngleAxisd( PI/2.0, Eigen::Vector3d::UnitZ()) * 
           Eigen::AngleAxisd(    0.0, Eigen::Vector3d::UnitY()) * 
@@ -337,15 +341,15 @@ void ahrsBringup::processLoop()
       }
       else if (device_type_ == 1) //imu单品ROS标准下的坐标变换
       {
-        Eigen::Quaterniond q_out =  q_r * q_ahrs * q_rr;
+        Eigen::Quaterniond q_out =  q_z * q_rr * q_ahrs;
         imu_data.orientation.w = q_out.w();
         imu_data.orientation.x = q_out.x();
         imu_data.orientation.y = q_out.y();
         imu_data.orientation.z = q_out.z();
         imu_data.angular_velocity.x = ahrs_frame_.frame.data.data_pack.RollSpeed;
-        imu_data.angular_velocity.y = -ahrs_frame_.frame.data.data_pack.PitchSpeed;
-        imu_data.angular_velocity.z = -ahrs_frame_.frame.data.data_pack.HeadingSpeed;
-        imu_data.linear_acceleration.x = -imu_frame_.frame.data.data_pack.accelerometer_x;
+        imu_data.angular_velocity.y = ahrs_frame_.frame.data.data_pack.PitchSpeed;
+        imu_data.angular_velocity.z = ahrs_frame_.frame.data.data_pack.HeadingSpeed;
+        imu_data.linear_acceleration.x = imu_frame_.frame.data.data_pack.accelerometer_x;
         imu_data.linear_acceleration.y = imu_frame_.frame.data.data_pack.accelerometer_y;
         imu_data.linear_acceleration.z = imu_frame_.frame.data.data_pack.accelerometer_z;
       }
