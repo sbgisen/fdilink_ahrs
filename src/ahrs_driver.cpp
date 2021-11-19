@@ -1,5 +1,5 @@
 #include <ahrs_driver.h>
-#include <eigen3/Eigen/Eigen>
+#include <Eigen/Eigen>
 namespace FDILink
 {
 ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20)
@@ -12,8 +12,7 @@ ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20)
   pravite_nh.param("imu_frame", imu_frame_id_, std::string("imu")); 
   pravite_nh.param("mag_pose_2d_topic", mag_pose_2d_topic_, std::string("/mag_pose_2d"));
   //serial                                                 
-  pravite_nh.param("port", serial_port_, std::string("/dev/ttyUSB0")); 
-  ROS_ERROR("port： %s",serial_port_.c_str());
+  pravite_nh.param("port", serial_port_, std::string("/dev/ttyTHS1")); 
   pravite_nh.param("baud", serial_baud_, 921600);
   //publisher
   imu_pub_ = nh_.advertise<sensor_msgs::Imu>(imu_topic_.c_str(), 10);
@@ -332,9 +331,9 @@ void ahrsBringup::processLoop()
       if (device_type_ == 0)         //未经变换的原始数据
       {
         imu_data.orientation.w = ahrs_frame_.frame.data.data_pack.Qw;
-        imu_data.orientation.x = ahrs_frame_.frame.data.data_pack.Qy;
-        imu_data.orientation.y = ahrs_frame_.frame.data.data_pack.Qx;
-        imu_data.orientation.z = -ahrs_frame_.frame.data.data_pack.Qz;
+        imu_data.orientation.x = ahrs_frame_.frame.data.data_pack.Qx;
+        imu_data.orientation.y = ahrs_frame_.frame.data.data_pack.Qy;
+        imu_data.orientation.z = ahrs_frame_.frame.data.data_pack.Qz;
         imu_data.angular_velocity.x = ahrs_frame_.frame.data.data_pack.RollSpeed;
         imu_data.angular_velocity.y = ahrs_frame_.frame.data.data_pack.PitchSpeed;
         imu_data.angular_velocity.z = ahrs_frame_.frame.data.data_pack.HeadingSpeed;

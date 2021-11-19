@@ -5,10 +5,6 @@ project(fdilink_ahrs)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")  
 
 find_package(Eigen3 REQUIRED)
-find_package(serial REQUIRED)
-
-link_directories("/usr/local/lib/")
-
 set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 find_package(catkin REQUIRED COMPONENTS
   # message_generation
@@ -21,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   # std_srvs
   # nav_msgs
+  serial
 )
 include_directories(
   include 
@@ -44,11 +41,11 @@ catkin_package(
 
 ## ahrs_driver
 add_executable(ahrs_driver src/ahrs_driver.cpp)
-target_link_libraries(ahrs_driver crc_table ${catkin_LIBRARIES} serial )# ${SERIAL_LIB}
+target_link_libraries(ahrs_driver crc_table ${catkin_LIBRARIES})# ${SERIAL_LIB}
 
 
 
 add_executable(imu_tf src/imu_tf.cpp)
-target_link_libraries( imu_tf ${catkin_LIBRARIES} serial)# ${SERIAL_LIB}
+target_link_libraries( imu_tf ${catkin_LIBRARIES})# ${SERIAL_LIB}
 ## crc_table
 add_library(crc_table src/crc_table.cpp)

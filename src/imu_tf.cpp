@@ -27,7 +27,7 @@ void ImuCallback(const sensor_msgs::ImuConstPtr& imu_data) {
 
     transform.setRotation(q);//设置旋转部分
     //广播出去
-    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "gyro_link"));
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "imu"));
 }
 int main (int argc, char ** argv) {
     ros::init(argc, argv, "imu_data_to_tf");
