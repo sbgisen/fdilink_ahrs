@@ -5,14 +5,19 @@ namespace FDILink
 ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20)
 {
   ros::NodeHandle pravite_nh("~");
+
   //topic_name & frame_id
   pravite_nh.param("debug", if_debug_, false);
   pravite_nh.param("device_type", device_type_, 1); // default: single imu
   pravite_nh.param("imu_topic", imu_topic_, std::string("/imu"));
   pravite_nh.param("imu_frame", imu_frame_id_, std::string("imu"));
   pravite_nh.param("mag_pose_2d_topic", mag_pose_2d_topic_, std::string("/mag_pose_2d"));
+  //sensor covariance setting
+  pravite_nh.param("imu_mag_covVec", imu_mag_cov, IMU_MAG_COV); // default: sample covariances from header
+  pravite_nh.param("imu_gyro_covVec", imu_gyro_cov, IMU_GYRO_COV); // default: sample covariances from header
+  pravite_nh.param("imu_accel_covVec", imu_accel_cov, IMU_ACCEL_COV); // default: sample covariances from header
   //serial
-  pravite_nh.param("port", serial_port_, std::string("/dev/ttyTHS1")); 
+  pravite_nh.param("port", serial_port_, std::string("/dev/ttyUSB1")); 
   pravite_nh.param("baud", serial_baud_, 921600);
   //publisher
   imu_pub_ = nh_.advertise<sensor_msgs::Imu>(imu_topic_.c_str(), 10);
@@ -353,15 +358,15 @@ void ahrsBringup::processLoop()
         imu_data.linear_acceleration.y = imu_frame_.frame.data.data_pack.accelerometer_y;
         imu_data.linear_acceleration.z = imu_frame_.frame.data.data_pack.accelerometer_z;
       }
-      imu_data.orientation_covariance[0] = IMU_MAG_COV;
-      imu_data.orientation_covariance[4] = IMU_MAG_COV;
-      imu_data.orientation_covariance[8] = IMU_MAG_COV;
-      imu_data.angular_velocity_covariance[0] = IMU_GYRO_COV;
-      imu_data.angular_velocity_covariance[4] = IMU_GYRO_COV;
-      imu_data.angular_velocity_covariance[8] = IMU_GYRO_COV;
-      imu_data.linear_acceleration_covariance[0] = IMU_ACCEL_COV;
-      imu_data.linear_acceleration_covariance[4] = IMU_ACCEL_COV;
-      imu_data.linear_acceleration_covariance[8] = IMU_ACCEL_COV;
+      imu_data.orientation_covariance[0] = imu_mag_cov[0];
+      imu_data.orientation_covariance[4] = imu_mag_cov[1];
+      imu_data.orientation_covariance[8] = imu_mag_cov[2];
+      imu_data.angular_velocity_covariance[0] = imu_gyro_cov[0];
+      imu_data.angular_velocity_covariance[4] = imu_gyro_cov[1];
+      imu_data.angular_velocity_covariance[8] = imu_gyro_cov[2];
+      imu_data.linear_acceleration_covariance[0] = imu_accel_cov[0];
+      imu_data.linear_acceleration_covariance[4] = imu_accel_cov[1];
+      imu_data.linear_acceleration_covariance[8] = imu_accel_cov[2];
       imu_pub_.publish(imu_data);
       Eigen::Quaterniond rpy_q(imu_data.orientation.w,
                                imu_data.orientation.x,

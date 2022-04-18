@@ -1,6 +1,10 @@
 <launch>
   <arg name="port" default="/dev/fdilink_ahrs" />
   <arg name="frame_id" default="n100_link" />
+  <arg name="imu_mag_covVec" default="[0.01, 0.01, 0.01]"/>
+  <arg name="imu_gyro_covVec" default="[0.01, 0.01, 0.01]"/>
+  <arg name="imu_accel_covVec" default="[0.01, 0.01, 0.01]"/>
+
   <node pkg="fdilink_ahrs" name="ahrs_driver" type="ahrs_driver" output="screen" ns="ahrs_imu">
     <!-- Whether to output debug information -->
     <param name="debug"  value="false"/>
@@ -17,6 +21,11 @@
     <!-- The published data has different coordinate systems based on different devices   -->
     <!-- 0: origin_data, 1: for single imu or ucar in ROS, 2:for Xiao in ROS -->
     <param name="device_type"  value="1"/>
+
+    <param name="imu_mag_cov" value="$(arg imu_mag_covVec)"/>
+    <param name="imu_gyro_cov" value="$(arg imu_gyro_covVec)"/>
+    <param name="imu_accel_cov" value="$(arg imu_accel_covVec)"/>
+
   </node>
   <!-- <include file='$(find fdilink_ahrs)/launch/tf.launch' /> -->
 </launch> 

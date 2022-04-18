@@ -33,9 +33,9 @@ namespace FDILink
 #define PI 3.141592653589793
 #define DEG_TO_RAD 0.017453292519943295
 // Sample covariance
-#define IMU_MAG_COV 0.1
-#define IMU_GYRO_COV 0.1
-#define IMU_ACCEL_COV 0.5
+#define IMU_MAG_COV {0.01, 0.01, 0.01}
+#define IMU_GYRO_COV {0.01, 0.01, 0.01}
+#define IMU_ACCEL_COV {0.05, 0.05, 0.05}
 
 class ahrsBringup
 {
@@ -57,6 +57,11 @@ private:
   uint8_t read_sn_ = 0;
   bool frist_sn_;
   int device_type_ = 1;
+
+  //covariance info
+  std::vector<double> imu_mag_cov;
+  std::vector<double> imu_gyro_cov;
+  std::vector<double> imu_accel_cov;
 
   //serial
   serial::Serial serial_; //声明串口对象
