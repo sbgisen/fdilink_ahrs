@@ -10,8 +10,6 @@
   <arg name="imu_gyro_covVec" default="[0.01, 0.01, 0.01]"/>
   <arg name="imu_accel_covVec" default="[0.01, 0.01, 0.01]"/>
 
-
-
   <node pkg="fdilink_ahrs" name="ahrs_driver" type="ahrs_driver" output="screen" ns="ahrs_imu">
     <!-- Whether to output debug information -->
     <param name="debug"  value="false"/>
