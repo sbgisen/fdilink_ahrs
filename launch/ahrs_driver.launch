@@ -1,9 +1,16 @@
 <launch>
   <arg name="port" default="/dev/fdilink_ahrs" />
-  <arg name="frame_id" default="n100_link" />
+  <arg name="imu_frame" default="n100_link" />
+  
+  <arg name="imu_topic" default="imu" />
+  <arg name="imu_topic_trueEast" default="imu_trueEast" />
+  <arg name="yaw_offset" default="-2.094" />
+
   <arg name="imu_mag_covVec" default="[0.01, 0.01, 0.01]"/>
   <arg name="imu_gyro_covVec" default="[0.01, 0.01, 0.01]"/>
   <arg name="imu_accel_covVec" default="[0.01, 0.01, 0.01]"/>
+
+
 
   <node pkg="fdilink_ahrs" name="ahrs_driver" type="ahrs_driver" output="screen" ns="ahrs_imu">
     <!-- Whether to output debug information -->
@@ -13,9 +20,11 @@
     <!-- Baudrate -->
     <param name="baud"  value="921600"/>
     <!-- Published imu topic name -->
-    <param name="imu_topic"  value="imu_data"/>
+    <param name="imu_topic"  value="$(arg imu_topic)"/>
+    <!-- Published imu topic name for true east heading -->
+    <param name="imu_topic"  value="$(arg imu_topic_trueEast)"/>
     <!-- The frame_id in the published imu topic -->
-    <param name="imu_frame"  value="$(arg frame_id)"/>
+    <param name="imu_frame"  value="$(arg imu_frame)"/>
     <!-- Geomagnetic north of the yaw angle -->
     <param name="mag_pose_2d_topic"  value="mag_pose_2d"/>
     <!-- The published data has different coordinate systems based on different devices   -->
