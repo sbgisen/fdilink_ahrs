@@ -77,12 +77,16 @@ private:
   string imu_frame_id_;
 
   //topic
-  string imu_topic_, mag_pose_2d_topic_;
+  string imu_topic_, mag_pose_2d_topic_, imu_topic_trueEast_;
   
   //Publisher
   ros::Publisher imu_pub_;
+  ros::Publisher imu_trueEast_pub_;
   ros::Publisher mag_pose_pub_;
 
+  // others
+  double yaw_offset;
+  tf::Quaternion q_rot;
 }; //ahrsBringup
 } // namespace FDILink
 

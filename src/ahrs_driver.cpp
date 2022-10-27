@@ -1,5 +1,6 @@
 #include <ahrs_driver.h>
 #include <Eigen/Eigen>
+#include "tf/transform_datatypes.h"
 namespace FDILink
 {
 ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20)
@@ -12,6 +13,9 @@ ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20)
   pravite_nh.param("imu_topic", imu_topic_, std::string("/imu"));
   pravite_nh.param("imu_frame", imu_frame_id_, std::string("imu"));
   pravite_nh.param("mag_pose_2d_topic", mag_pose_2d_topic_, std::string("/mag_pose_2d"));
+  pravite_nh.param("imu_topic_trueEast", imu_topic_trueEast_, std::string("/imu_trueEast"));
+  pravite_nh.param("yaw_offset", yaw_offset, -2.094);
+  q_rot.setRPY(0, 0, yaw_offset);
   //sensor covariance setting
   pravite_nh.param("imu_mag_covVec", imu_mag_cov, IMU_MAG_COV); // default: sample covariances from header
   pravite_nh.param("imu_gyro_covVec", imu_gyro_cov, IMU_GYRO_COV); // default: sample covariances from header
@@ -21,6 +25,7 @@ ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20)
   pravite_nh.param("baud", serial_baud_, 921600);
   //publisher
   imu_pub_ = nh_.advertise<sensor_msgs::Imu>(imu_topic_.c_str(), 10);
+  imu_trueEast_pub_ = nh_.advertise<sensor_msgs::Imu>(imu_topic_trueEast_.c_str(), 10);
   mag_pose_pub_ = nh_.advertise<geometry_msgs::Pose2D>(mag_pose_2d_topic_.c_str(), 10);
   //setp up serial
   try
@@ -308,7 +313,7 @@ void ahrsBringup::processLoop()
     if (head_type[0] == TYPE_AHRS)
     {
       // publish imu topic
-      sensor_msgs::Imu imu_data;
+      sensor_msgs::Imu imu_data, imu_trueEast_data;
       imu_data.header.stamp = ros::Time::now();
       imu_data.header.frame_id = imu_frame_id_.c_str();
       Eigen::Quaterniond q_ahrs(ahrs_frame_.frame.data.data_pack.Qw,
@@ -368,6 +373,32 @@ void ahrsBringup::processLoop()
       imu_data.linear_acceleration_covariance[4] = imu_accel_cov[1];
       imu_data.linear_acceleration_covariance[8] = imu_accel_cov[2];
       imu_pub_.publish(imu_data);
+      // true East heading publish ----
+      tf::Quaternion q_new;
+      tf::Quaternion q_orig(
+        imu_data.orientation.x,
+        imu_data.orientation.y,
+        imu_data.orientation.z,
+        imu_data.orientation.w);
+      q_new = q_rot * q_orig;
+      q_new.normalize();
+
+      imu_trueEast_data.orientation.x = q_new.x();
+      imu_trueEast_data.orientation.y = q_new.y();
+      imu_trueEast_data.orientation.z = q_new.z();
+      imu_trueEast_data.orientation.w = q_new.w();
+      imu_trueEast_data.orientation_covariance[0] = imu_mag_cov[0];
+      imu_trueEast_data.orientation_covariance[4] = imu_mag_cov[1];
+      imu_trueEast_data.orientation_covariance[8] = imu_mag_cov[2];
+      imu_trueEast_data.angular_velocity_covariance[0] = imu_gyro_cov[0];
+      imu_trueEast_data.angular_velocity_covariance[4] = imu_gyro_cov[1];
+      imu_trueEast_data.angular_velocity_covariance[8] = imu_gyro_cov[2];
+      imu_trueEast_data.linear_acceleration_covariance[0] = imu_accel_cov[0];
+      imu_trueEast_data.linear_acceleration_covariance[4] = imu_accel_cov[1];
+      imu_trueEast_data.linear_acceleration_covariance[8] = imu_accel_cov[2];
+      imu_trueEast_pub_.publish(imu_trueEast_data);
+      // ------------------------------
+
       Eigen::Quaterniond rpy_q(imu_data.orientation.w,
                                imu_data.orientation.x,
                                imu_data.orientation.y,

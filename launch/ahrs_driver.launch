@@ -1,31 +1,5 @@
 <launch>
-  <arg name="port" default="/dev/fdilink_ahrs" />
-  <arg name="frame_id" default="n100_link" />
-  <arg name="imu_mag_covVec" default="[0.01, 0.01, 0.01]"/>
-  <arg name="imu_gyro_covVec" default="[0.01, 0.01, 0.01]"/>
-  <arg name="imu_accel_covVec" default="[0.01, 0.01, 0.01]"/>
 
-  <node pkg="fdilink_ahrs" name="ahrs_driver" type="ahrs_driver" output="screen" ns="ahrs_imu">
-    <!-- Whether to output debug information -->
-    <param name="debug"  value="false"/>
-    <!-- Serial device, can be fixed by rules.d configuration -->
-    <param name="port" value="$(arg port)" />
-    <!-- Baudrate -->
-    <param name="baud"  value="921600"/>
-    <!-- Published imu topic name -->
-    <param name="imu_topic"  value="imu_data"/>
-    <!-- The frame_id in the published imu topic -->
-    <param name="imu_frame"  value="$(arg frame_id)"/>
-    <!-- Geomagnetic north of the yaw angle -->
-    <param name="mag_pose_2d_topic"  value="mag_pose_2d"/>
-    <!-- The published data has different coordinate systems based on different devices   -->
-    <!-- 0: origin_data, 1: for single imu or ucar in ROS, 2:for Xiao in ROS -->
-    <param name="device_type"  value="1"/>
-
-    <param name="imu_mag_cov" value="$(arg imu_mag_covVec)"/>
-    <param name="imu_gyro_cov" value="$(arg imu_gyro_covVec)"/>
-    <param name="imu_accel_cov" value="$(arg imu_accel_covVec)"/>
-
-  </node>
+  <node pkg="fdilink_ahrs" name="ahrs_driver" type="ahrs_driver" output="screen" ns="ahrs_imu"/>
   <!-- <include file='$(find fdilink_ahrs)/launch/tf.launch' /> -->
 </launch> 
