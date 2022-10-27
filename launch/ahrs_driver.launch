@@ -1,15 +1,5 @@
 <launch>
 
-  <node pkg="fdilink_ahrs" name="ahrs_driver" type="ahrs_driver" output="screen" ns="ahrs_imu">
-    <!-- Whether to output debug information -->
-    <param name="debug"  value="false"/>
-    <!-- Baudrate -->
-    <param name="baud"  value="921600"/>
-    <!-- Geomagnetic north of the yaw angle -->
-    <param name="mag_pose_2d_topic"  value="mag_pose_2d"/>
-    <!-- 0: origin_data, 1: for single imu or ucar in ROS, 2:for Xiao in ROS -->
-    <param name="device_type"  value="1"/>
-
-  </node>
+  <node pkg="fdilink_ahrs" name="ahrs_driver" type="ahrs_driver" output="screen" ns="ahrs_imu"/>
   <!-- <include file='$(find fdilink_ahrs)/launch/tf.launch' /> -->
 </launch> 
