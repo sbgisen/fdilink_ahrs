@@ -387,15 +387,9 @@ void ahrsBringup::processLoop()
       imu_trueEast_data.orientation.y = q_new.y();
       imu_trueEast_data.orientation.z = q_new.z();
       imu_trueEast_data.orientation.w = q_new.w();
-      imu_trueEast_data.orientation_covariance[0] = imu_mag_cov[0];
-      imu_trueEast_data.orientation_covariance[4] = imu_mag_cov[1];
-      imu_trueEast_data.orientation_covariance[8] = imu_mag_cov[2];
-      imu_trueEast_data.angular_velocity_covariance[0] = imu_gyro_cov[0];
-      imu_trueEast_data.angular_velocity_covariance[4] = imu_gyro_cov[1];
-      imu_trueEast_data.angular_velocity_covariance[8] = imu_gyro_cov[2];
-      imu_trueEast_data.linear_acceleration_covariance[0] = imu_accel_cov[0];
-      imu_trueEast_data.linear_acceleration_covariance[4] = imu_accel_cov[1];
-      imu_trueEast_data.linear_acceleration_covariance[8] = imu_accel_cov[2];
+      imu_trueEast_data.orientation_covariance = imu_data.orientation_covariance;
+      imu_trueEast_data.angular_velocity_covariance = imu_data.angular_velocity_covariance;
+      imu_trueEast_data.linear_acceleration_covariance = imu_data.linear_acceleration_covariance;
       imu_trueEast_pub_.publish(imu_trueEast_data);
       // ------------------------------
 
