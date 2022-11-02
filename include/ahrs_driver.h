@@ -9,6 +9,7 @@
 #include <fstream>
 #include <fdilink_data_struct.h>
 #include <sensor_msgs/Imu.h>
+#include <sensor_msgs/MagneticField.h>
 #include <geometry_msgs/Pose2D.h>
 #include <boost/thread.hpp>
 #include <string>
@@ -77,12 +78,13 @@ private:
   string imu_frame_id_;
 
   //topic
-  string imu_topic_, mag_pose_2d_topic_, imu_topic_trueEast_;
-  
+  string imu_topic_, mag_pose_2d_topic_, imu_topic_trueEast_, mag_topic_;
+
   //Publisher
   ros::Publisher imu_pub_;
   ros::Publisher imu_trueEast_pub_;
   ros::Publisher mag_pose_pub_;
+  ros::Publisher mag_pub_;
 
   // others
   double yaw_offset;
