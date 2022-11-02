@@ -438,6 +438,7 @@ void ahrsBringup::processLoop()
       std::fill(mag.magnetic_field_covariance.begin(), mag.magnetic_field_covariance.end(), mag_covariance_);
       mag_pub_.publish(mag);
     }
+    ros::spinOnce();
   }
 }
 
