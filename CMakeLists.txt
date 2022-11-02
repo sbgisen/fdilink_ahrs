@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(fdilink_ahrs)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")  
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
 find_package(Eigen3 REQUIRED)
 set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
@@ -11,19 +11,23 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   serial
+  dynamic_reconfigure
 )
+
+generate_dynamic_reconfigure_options(cfg/FdilinkAhrs.cfg)
 
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS roscpp sensor_msgs std_msgs tf serial
 )
 
+add_dependencies(${PROJECT_NAME}_gencfg ${catkin_EXPORTED_TARGETS})
+
 include_directories(
-  include 
+  include
   src
   ${catkin_INCLUDE_DIRS}
-  ${Eigen3_INCLUDE_DIRS} 
-  
+  ${Eigen3_INCLUDE_DIRS}
 )
 # set(SERIAL_LIB /opt/ros/kinetic/lib/libserial.so)
 # set(SERIAL_LIB_PATH /opt/ros/kinetic/lib)

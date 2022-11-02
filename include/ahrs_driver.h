@@ -15,6 +15,8 @@
 #include <string>
 #include <ros/package.h>
 #include <crc_table.h>
+#include <dynamic_reconfigure/server.h>
+#include <fdilink_ahrs/FdilinkAhrsConfig.h>
 
 
 using namespace std;
@@ -49,6 +51,8 @@ public:
   void checkSN(int type);
   void magCalculateYaw(double roll, double pitch, double &magyaw, double magx, double magy, double magz);
   ros::NodeHandle nh_;
+  dynamic_reconfigure::Server<fdilink_ahrs::FdilinkAhrsConfig> reconfig_server_;
+  void reconfigCallback(fdilink_ahrs::FdilinkAhrsConfig &config, uint32_t level);
 
 private:
   bool if_debug_;
@@ -89,6 +93,10 @@ private:
   // others
   double yaw_offset;
   tf::Quaternion q_rot;
+  double mag_offset_x_;
+  double mag_offset_y_;
+  double mag_offset_z_;
+  double mag_covariance_;
 }; //ahrsBringup
 } // namespace FDILink
 

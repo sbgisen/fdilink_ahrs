@@ -3,7 +3,7 @@
 #include "tf/transform_datatypes.h"
 namespace FDILink
 {
-ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20)
+ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20), mag_offset_x_(0), mag_offset_y_(0), mag_offset_z_(0), mag_covariance_(0)
 {
   ros::NodeHandle pravite_nh("~");
 
@@ -29,6 +29,9 @@ ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20)
   imu_trueEast_pub_ = nh_.advertise<sensor_msgs::Imu>(imu_topic_trueEast_.c_str(), 10);
   mag_pose_pub_ = nh_.advertise<geometry_msgs::Pose2D>(mag_pose_2d_topic_.c_str(), 10);
   mag_pub_ = nh_.advertise<sensor_msgs::MagneticField>(mag_topic_.c_str(), 10);
+  // dynamic reconfigure server
+  dynamic_reconfigure::Server<fdilink_ahrs::FdilinkAhrsConfig>::CallbackType f = boost::bind(&ahrsBringup::reconfigCallback, this, _1, _2);
+  reconfig_server_.setCallback(f);
   //setp up serial
   try
   {
@@ -417,6 +420,11 @@ void ahrsBringup::processLoop()
         roll  = EulerAngle[2];
         pitch = EulerAngle[1];
       }
+
+      magx -= mag_offset_x_;
+      magy -= mag_offset_y_;
+      magz -= mag_offset_z_;
+
       double magyaw;
       magCalculateYaw(roll, pitch, magyaw, magx, magy, magz);
       pose_2d.theta = magyaw;
@@ -427,6 +435,7 @@ void ahrsBringup::processLoop()
       mag.magnetic_field.x = magx;
       mag.magnetic_field.y = magy;
       mag.magnetic_field.z = magz;
+      std::fill(mag.magnetic_field_covariance.begin(), mag.magnetic_field_covariance.end(), mag_covariance_);
       mag_pub_.publish(mag);
     }
   }
@@ -514,6 +523,16 @@ void ahrsBringup::checkSN(int type)
   default:
     break;
   }
+}
+
+void ahrsBringup::reconfigCallback(fdilink_ahrs::FdilinkAhrsConfig &config, uint32_t level)
+{
+  mag_offset_x_ = config.mag_offset_x;
+  mag_offset_y_ = config.mag_offset_y;
+  mag_offset_z_ = config.mag_offset_z;
+  mag_covariance_ = config.mag_covariance;
+  ROS_INFO("Magnetometer offset values: %f %f %f", mag_offset_x_, mag_offset_y_, mag_offset_z_);
+  ROS_INFO("Magnetic Field Constant Covariance: %f", mag_covariance_);
 }
 
 } //namespace FDILink
