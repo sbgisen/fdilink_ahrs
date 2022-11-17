@@ -3,7 +3,7 @@
 #include "tf/transform_datatypes.h"
 namespace FDILink
 {
-ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20)
+ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20), mag_offset_x_(0), mag_offset_y_(0), mag_offset_z_(0), mag_covariance_(0)
 {
   ros::NodeHandle pravite_nh("~");
 
@@ -14,6 +14,7 @@ ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20)
   pravite_nh.param("imu_frame", imu_frame_id_, std::string("imu"));
   pravite_nh.param("mag_pose_2d_topic", mag_pose_2d_topic_, std::string("/mag_pose_2d"));
   pravite_nh.param("imu_topic_trueEast", imu_topic_trueEast_, std::string("/imu_trueEast"));
+  pravite_nh.param("mag_topic", mag_topic_, std::string("/magnetic_field"));
   pravite_nh.param("yaw_offset", yaw_offset, -2.094);
   q_rot.setRPY(0, 0, yaw_offset);
   //sensor covariance setting
@@ -21,12 +22,16 @@ ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20)
   pravite_nh.param("imu_gyro_covVec", imu_gyro_cov, IMU_GYRO_COV); // default: sample covariances from header
   pravite_nh.param("imu_accel_covVec", imu_accel_cov, IMU_ACCEL_COV); // default: sample covariances from header
   //serial
-  pravite_nh.param("port", serial_port_, std::string("/dev/ttyUSB1")); 
+  pravite_nh.param("port", serial_port_, std::string("/dev/ttyUSB1"));
   pravite_nh.param("baud", serial_baud_, 921600);
   //publisher
   imu_pub_ = nh_.advertise<sensor_msgs::Imu>(imu_topic_.c_str(), 10);
   imu_trueEast_pub_ = nh_.advertise<sensor_msgs::Imu>(imu_topic_trueEast_.c_str(), 10);
   mag_pose_pub_ = nh_.advertise<geometry_msgs::Pose2D>(mag_pose_2d_topic_.c_str(), 10);
+  mag_pub_ = nh_.advertise<sensor_msgs::MagneticField>(mag_topic_.c_str(), 10);
+  // dynamic reconfigure server
+  dynamic_reconfigure::Server<fdilink_ahrs::FdilinkAhrsConfig>::CallbackType f = boost::bind(&ahrsBringup::reconfigCallback, this, _1, _2);
+  reconfig_server_.setCallback(f);
   //setp up serial
   try
   {
@@ -203,7 +208,7 @@ void ahrsBringup::processLoop()
         read_sn_  = ahrs_frame_.frame.header.serial_num - 1;
         frist_sn_ = true;
       }
-      //check sn 
+      //check sn
       ahrsBringup::checkSN(TYPE_AHRS);
     }
     else if (head_type[0] == TYPE_INSGPS)
@@ -241,7 +246,7 @@ void ahrsBringup::processLoop()
       //   std::cout << std::dec << std::endl;
       // }
       uint16_t CRC16 = CRC16_Table(imu_frame_.frame.data.data_buff, IMU_LEN);
-      if (if_debug_){          
+      if (if_debug_){
         std::cout << "CRC16:        " << std::hex << (int)CRC16 << std::dec << std::endl;
         std::cout << "head_crc16:   " << std::hex << (int)head_crc16 << std::dec << std::endl;
         std::cout << "head_crc16_h: " << std::hex << (int)head_crc16_h << std::dec << std::endl;
@@ -274,7 +279,7 @@ void ahrsBringup::processLoop()
       //   std::cout << std::dec << std::endl;
       // }
       uint16_t CRC16 = CRC16_Table(ahrs_frame_.frame.data.data_buff, AHRS_LEN);
-      if (if_debug_){          
+      if (if_debug_){
         std::cout << "CRC16:        " << std::hex << (int)CRC16 << std::dec << std::endl;
         std::cout << "head_crc16:   " << std::hex << (int)head_crc16 << std::dec << std::endl;
         std::cout << "head_crc16_h: " << std::hex << (int)head_crc16_h << std::dec << std::endl;
@@ -321,20 +326,20 @@ void ahrsBringup::processLoop()
                                 ahrs_frame_.frame.data.data_pack.Qy,
                                 ahrs_frame_.frame.data.data_pack.Qz);
       Eigen::Quaterniond q_r =
-          Eigen::AngleAxisd(  PI, Eigen::Vector3d::UnitZ()) * 
-          Eigen::AngleAxisd(  PI, Eigen::Vector3d::UnitY()) * 
+          Eigen::AngleAxisd(  PI, Eigen::Vector3d::UnitZ()) *
+          Eigen::AngleAxisd(  PI, Eigen::Vector3d::UnitY()) *
           Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitX());
       Eigen::Quaterniond q_rr =
-          Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitZ()) * 
-          Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitY()) * 
+          Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitZ()) *
+          Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitY()) *
           Eigen::AngleAxisd(  PI, Eigen::Vector3d::UnitX());
       Eigen::Quaterniond q_z =
-          Eigen::AngleAxisd(  PI, Eigen::Vector3d::UnitZ()) * 
-          Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitY()) * 
+          Eigen::AngleAxisd(  PI, Eigen::Vector3d::UnitZ()) *
+          Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitY()) *
           Eigen::AngleAxisd( 0.0, Eigen::Vector3d::UnitX());
       Eigen::Quaterniond q_xiao_rr =
-          Eigen::AngleAxisd( PI/2.0, Eigen::Vector3d::UnitZ()) * 
-          Eigen::AngleAxisd(    0.0, Eigen::Vector3d::UnitY()) * 
+          Eigen::AngleAxisd( PI/2.0, Eigen::Vector3d::UnitZ()) *
+          Eigen::AngleAxisd(    0.0, Eigen::Vector3d::UnitY()) *
           Eigen::AngleAxisd(     PI, Eigen::Vector3d::UnitX());
       if (device_type_ == 0) //未经变换的原始数据
       {
@@ -410,16 +415,30 @@ void ahrsBringup::processLoop()
         magx  = -imu_frame_.frame.data.data_pack.magnetometer_x;
         magy  = imu_frame_.frame.data.data_pack.magnetometer_y;
         magz  = imu_frame_.frame.data.data_pack.magnetometer_z;
-        
+
         Eigen::Vector3d EulerAngle = rpy_q.matrix().eulerAngles(2, 1, 0);
         roll  = EulerAngle[2];
         pitch = EulerAngle[1];
-      } 
+      }
+
+      magx -= mag_offset_x_;
+      magy -= mag_offset_y_;
+      magz -= mag_offset_z_;
+
       double magyaw;
       magCalculateYaw(roll, pitch, magyaw, magx, magy, magz);
       pose_2d.theta = magyaw;
       mag_pose_pub_.publish(pose_2d);
+
+      sensor_msgs::MagneticField mag;
+      mag.header = imu_data.header;
+      mag.magnetic_field.x = magx;
+      mag.magnetic_field.y = magy;
+      mag.magnetic_field.z = magz;
+      std::fill(mag.magnetic_field_covariance.begin(), mag.magnetic_field_covariance.end(), mag_covariance_);
+      mag_pub_.publish(mag);
     }
+    ros::spinOnce();
   }
 }
 
@@ -505,6 +524,16 @@ void ahrsBringup::checkSN(int type)
   default:
     break;
   }
+}
+
+void ahrsBringup::reconfigCallback(fdilink_ahrs::FdilinkAhrsConfig &config, uint32_t level)
+{
+  mag_offset_x_ = config.mag_offset_x;
+  mag_offset_y_ = config.mag_offset_y;
+  mag_offset_z_ = config.mag_offset_z;
+  mag_covariance_ = config.mag_covariance;
+  ROS_INFO("Magnetometer offset values: %f %f %f", mag_offset_x_, mag_offset_y_, mag_offset_z_);
+  ROS_INFO("Magnetic Field Constant Covariance: %f", mag_covariance_);
 }
 
 } //namespace FDILink
