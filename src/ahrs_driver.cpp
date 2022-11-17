@@ -10,11 +10,11 @@ ahrsBringup::ahrsBringup() :frist_sn_(false), serial_timeout_(20), mag_offset_x_
   //topic_name & frame_id
   pravite_nh.param("debug", if_debug_, false);
   pravite_nh.param("device_type", device_type_, 1); // default: single imu
-  pravite_nh.param("imu_topic", imu_topic_, std::string("/imu"));
+  pravite_nh.param("imu_topic", imu_topic_, std::string("imu"));
   pravite_nh.param("imu_frame", imu_frame_id_, std::string("imu"));
-  pravite_nh.param("mag_pose_2d_topic", mag_pose_2d_topic_, std::string("/mag_pose_2d"));
-  pravite_nh.param("imu_topic_trueEast", imu_topic_trueEast_, std::string("/imu_trueEast"));
-  pravite_nh.param("mag_topic", mag_topic_, std::string("/magnetic_field"));
+  pravite_nh.param("mag_pose_2d_topic", mag_pose_2d_topic_, std::string("mag_pose_2d"));
+  pravite_nh.param("imu_topic_trueEast", imu_topic_trueEast_, std::string("imu_trueEast"));
+  pravite_nh.param("mag_topic", mag_topic_, std::string("magnetic_field"));
   pravite_nh.param("yaw_offset", yaw_offset, -2.094);
   q_rot.setRPY(0, 0, yaw_offset);
   //sensor covariance setting
