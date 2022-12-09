@@ -35,6 +35,7 @@ include_directories(
 
 ## ahrs_driver
 add_executable(ahrs_driver src/ahrs_driver.cpp)
+add_dependencies(ahrs_driver ${PROJECT_NAME}_gencfg)
 target_link_libraries(ahrs_driver crc_table ${catkin_LIBRARIES})# ${SERIAL_LIB}
 
 
