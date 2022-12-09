@@ -21,8 +21,6 @@ catkin_package(
   CATKIN_DEPENDS roscpp sensor_msgs std_msgs tf serial
 )
 
-add_dependencies(${PROJECT_NAME}_gencfg ${catkin_EXPORTED_TARGETS})
-
 include_directories(
   include
   src
