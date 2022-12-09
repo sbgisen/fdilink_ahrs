@@ -21,8 +21,6 @@ catkin_package(
   CATKIN_DEPENDS roscpp sensor_msgs std_msgs tf serial
 )
 
-add_dependencies(${PROJECT_NAME}_gencfg ${catkin_EXPORTED_TARGETS})
-
 include_directories(
   include
   src
@@ -35,6 +33,7 @@ include_directories(
 
 ## ahrs_driver
 add_executable(ahrs_driver src/ahrs_driver.cpp)
+add_dependencies(ahrs_driver ${PROJECT_NAME}_gencfg)
 target_link_libraries(ahrs_driver crc_table ${catkin_LIBRARIES})# ${SERIAL_LIB}
 
 
