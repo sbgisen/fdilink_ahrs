@@ -432,9 +432,9 @@ void ahrsBringup::processLoop()
 
       sensor_msgs::MagneticField mag;
       mag.header = imu_data.header;
-      mag.magnetic_field.x = magx;
-      mag.magnetic_field.y = magy;
-      mag.magnetic_field.z = magz;
+      mag.magnetic_field.x = magx * 1.0e-7;
+      mag.magnetic_field.y = magy * 1.0e-7;
+      mag.magnetic_field.z = magz * 1.0e-7;
       std::fill(mag.magnetic_field_covariance.begin(), mag.magnetic_field_covariance.end(), mag_covariance_);
       mag_pub_.publish(mag);
     }
