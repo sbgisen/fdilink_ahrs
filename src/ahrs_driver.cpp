@@ -412,7 +412,7 @@ void ahrsBringup::processLoop()
         pitch = ahrs_frame_.frame.data.data_pack.Pitch;
       }
       else if (device_type_ == 1){ //小车以及imu单品ROS标准下的坐标变换//
-        magx  = -imu_frame_.frame.data.data_pack.magnetometer_x;
+        magx  = imu_frame_.frame.data.data_pack.magnetometer_x;
         magy  = imu_frame_.frame.data.data_pack.magnetometer_y;
         magz  = imu_frame_.frame.data.data_pack.magnetometer_z;
 
