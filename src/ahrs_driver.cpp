@@ -528,9 +528,9 @@ void ahrsBringup::checkSN(int type)
 
 void ahrsBringup::reconfigCallback(fdilink_ahrs::FdilinkAhrsConfig &config, uint32_t level)
 {
-  mag_offset_x_ = config.mag_offset_x;
-  mag_offset_y_ = config.mag_offset_y;
-  mag_offset_z_ = config.mag_offset_z;
+  mag_offset_x_ = config.mag_bias_x;
+  mag_offset_y_ = config.mag_bias_y;
+  mag_offset_z_ = config.mag_bias_z;
   mag_covariance_ = config.mag_covariance;
   ROS_INFO("Magnetometer offset values: %f %f %f", mag_offset_x_, mag_offset_y_, mag_offset_z_);
   ROS_INFO("Magnetic Field Constant Covariance: %f", mag_covariance_);
