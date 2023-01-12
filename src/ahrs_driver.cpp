@@ -421,6 +421,10 @@ void ahrsBringup::processLoop()
         pitch = EulerAngle[1];
       }
 
+      // Convert mG to T
+      magx *= 1.0e-7;
+      magy *= 1.0e-7;
+      magz *= 1.0e-7;
       magx -= mag_offset_x_;
       magy -= mag_offset_y_;
       magz -= mag_offset_z_;
@@ -432,9 +436,9 @@ void ahrsBringup::processLoop()
 
       sensor_msgs::MagneticField mag;
       mag.header = imu_data.header;
-      mag.magnetic_field.x = magx * 1.0e-7;
-      mag.magnetic_field.y = magy * 1.0e-7;
-      mag.magnetic_field.z = magz * 1.0e-7;
+      mag.magnetic_field.x = magx;
+      mag.magnetic_field.y = magy;
+      mag.magnetic_field.z = magz;
       std::fill(mag.magnetic_field_covariance.begin(), mag.magnetic_field_covariance.end(), mag_covariance_);
       mag_pub_.publish(mag);
     }
@@ -528,9 +532,9 @@ void ahrsBringup::checkSN(int type)
 
 void ahrsBringup::reconfigCallback(fdilink_ahrs::FdilinkAhrsConfig &config, uint32_t level)
 {
-  mag_offset_x_ = config.mag_offset_x;
-  mag_offset_y_ = config.mag_offset_y;
-  mag_offset_z_ = config.mag_offset_z;
+  mag_offset_x_ = config.mag_bias_x;
+  mag_offset_y_ = config.mag_bias_y;
+  mag_offset_z_ = config.mag_bias_z;
   mag_covariance_ = config.mag_covariance;
   ROS_INFO("Magnetometer offset values: %f %f %f", mag_offset_x_, mag_offset_y_, mag_offset_z_);
   ROS_INFO("Magnetic Field Constant Covariance: %f", mag_covariance_);
