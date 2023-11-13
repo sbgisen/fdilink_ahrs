@@ -42,3 +42,10 @@ add_executable(imu_tf src/imu_tf.cpp)
 target_link_libraries( imu_tf ${catkin_LIBRARIES})# ${SERIAL_LIB}
 ## crc_table
 add_library(crc_table src/crc_table.cpp)
+
+install(TARGETS ahrs_driver imu_tf crc_table
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
