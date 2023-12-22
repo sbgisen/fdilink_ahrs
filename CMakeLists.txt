@@ -1,24 +1,30 @@
 cmake_minimum_required(VERSION 2.8)
 project(fdilink_ahrs)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
 find_package(Eigen3 REQUIRED)
 set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  sensor_msgs
-  std_msgs
-  tf
-  serial
-  dynamic_reconfigure
+find_package(
+  catkin REQUIRED
+  COMPONENTS roscpp
+             sensor_msgs
+             std_msgs
+             tf
+             serial
+             dynamic_reconfigure
 )
 
 generate_dynamic_reconfigure_options(cfg/FdilinkAhrs.cfg)
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp sensor_msgs std_msgs tf serial
+  CATKIN_DEPENDS
+    roscpp
+    sensor_msgs
+    std_msgs
+    tf
+    serial
 )
 
 include_directories(
@@ -34,11 +40,13 @@ include_directories(
 ## ahrs_driver
 add_executable(ahrs_driver src/ahrs_driver.cpp)
 add_dependencies(ahrs_driver ${PROJECT_NAME}_gencfg)
-target_link_libraries(ahrs_driver crc_table ${catkin_LIBRARIES})# ${SERIAL_LIB}
-
-
+target_link_libraries(
+  ahrs_driver
+  crc_table
+  ${catkin_LIBRARIES}
+) # ${SERIAL_LIB}
 
 add_executable(imu_tf src/imu_tf.cpp)
-target_link_libraries( imu_tf ${catkin_LIBRARIES})# ${SERIAL_LIB}
+target_link_libraries(imu_tf ${catkin_LIBRARIES}) # ${SERIAL_LIB}
 ## crc_table
 add_library(crc_table src/crc_table.cpp)
