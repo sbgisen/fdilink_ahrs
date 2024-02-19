@@ -45,6 +45,16 @@ ahrsBringup::ahrsBringup()
   this->get_parameter("imu_mag_covVec", imu_mag_cov);
   this->get_parameter("imu_gyro_covVec", imu_gyro_cov);
   this->get_parameter("imu_accel_covVec", imu_accel_cov);
+  this->declare_parameter("mag_bias_x", 0.0);
+  this->declare_parameter("mag_bias_y", 0.0);
+  this->declare_parameter("mag_bias_z", 0.0);
+  this->declare_parameter("mag_covariance", 0.0);
+  this->get_parameter("mag_bias_x", mag_offset_x_);
+  this->get_parameter("mag_bias_y", mag_offset_y_);
+  this->get_parameter("mag_bias_z", mag_offset_z_);
+  this->get_parameter("mag_covariance", mag_covariance_);
+  parameter_handler_ =
+      this->add_on_set_parameters_callback(std::bind(&ahrsBringup::parameterCallback, this, std::placeholders::_1));
   // serial
   this->declare_parameter("port", "/dev/ttyUSB1");
   this->declare_parameter("baud", 921600);
@@ -87,6 +97,34 @@ ahrsBringup::~ahrsBringup()
 {
   if (serial_driver_->port() && serial_driver_->port()->is_open())
     serial_driver_->port()->close();
+}
+
+rcl_interfaces::msg::SetParametersResult ahrsBringup::parameterCallback(const std::vector<rclcpp::Parameter>& params)
+{
+  auto results = rcl_interfaces::msg::SetParametersResult();
+
+  for (const auto& param : params)
+  {
+    if (param.get_name() == "mag_bias_x")
+    {
+      mag_offset_x_ = param.as_double();
+    }
+    else if (param.get_name() == "mag_bias_y")
+    {
+      mag_offset_y_ = param.as_double();
+    }
+    else if (param.get_name() == "mag_bias_z")
+    {
+      mag_offset_z_ = param.as_double();
+    }
+    else if (param.get_name() == "mag_covariance")
+    {
+      mag_covariance_ = param.as_double();
+    }
+  }
+
+  results.successful = true;
+  return results;
 }
 
 void ahrsBringup::processLoop()

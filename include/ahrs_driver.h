@@ -58,8 +58,10 @@ public:
   bool checkCS16(int len);
   void checkSN(int type);
   void magCalculateYaw(double roll, double pitch, double& magyaw, double magx, double magy, double magz);
+  rcl_interfaces::msg::SetParametersResult parameterCallback(const std::vector<rclcpp::Parameter>& parameters);
 
 private:
+  OnSetParametersCallbackHandle::SharedPtr parameter_handler_;
   bool if_debug_;
   // sum info
   int sn_lost_ = 0;
