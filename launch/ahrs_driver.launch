@@ -1,5 +1,0 @@
-<launch>
-
-  <node pkg="fdilink_ahrs" name="ahrs_driver" type="ahrs_driver" output="screen" ns="ahrs_imu"/>
-  <!-- <include file='$(find fdilink_ahrs)/launch/tf.launch' /> -->
-</launch> 
