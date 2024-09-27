@@ -61,10 +61,10 @@ ahrsBringup::ahrsBringup()
   this->get_parameter("port", serial_port_);
   this->get_parameter("baud", serial_baud_);
   // publisher
-  imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(imu_topic_, 10);
-  imu_trueEast_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(imu_topic_trueEast_, 10);
-  mag_pose_pub_ = this->create_publisher<geometry_msgs::msg::Pose2D>(mag_pose_2d_topic_, 10);
-  mag_pub_ = this->create_publisher<sensor_msgs::msg::MagneticField>(mag_topic_, 10);
+  imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(imu_topic_, rclcpp::SensorDataQoS());
+  imu_trueEast_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(imu_topic_trueEast_, rclcpp::SensorDataQoS());
+  mag_pose_pub_ = this->create_publisher<geometry_msgs::msg::Pose2D>(mag_pose_2d_topic_, rclcpp::SensorDataQoS());
+  mag_pub_ = this->create_publisher<sensor_msgs::msg::MagneticField>(mag_topic_, rclcpp::SensorDataQoS());
 
   // setp up serial
   try
