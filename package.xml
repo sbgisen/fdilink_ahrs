@@ -16,6 +16,7 @@
   <license>TODO</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <depend>diagnostic_updater</depend>
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>

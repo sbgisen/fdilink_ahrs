@@ -1,6 +1,8 @@
 #ifndef BASE_DRIVER_H_
 #define BASE_DRIVER_H_
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <diagnostic_updater/publisher.hpp>
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tf2_ros/transform_broadcaster.h>
@@ -94,10 +96,8 @@ private:
   string imu_topic_, mag_pose_2d_topic_, imu_topic_trueEast_, mag_topic_;
 
   // Publisher
-  rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
   rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_trueEast_pub_;
   rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr mag_pose_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::MagneticField>::SharedPtr mag_pub_;
 
   // others
   double yaw_offset;
@@ -106,6 +106,11 @@ private:
   double mag_offset_y_;
   double mag_offset_z_;
   double mag_covariance_;
+
+  double frequency_;
+  diagnostic_updater::Updater updater_;
+  std::shared_ptr<diagnostic_updater::DiagnosedPublisher<sensor_msgs::msg::Imu>> diagnosed_imu_publisher_;
+  std::shared_ptr<diagnostic_updater::DiagnosedPublisher<sensor_msgs::msg::MagneticField>> diagnosed_mag_publisher_;
 };  // ahrsBringup
 }  // namespace FDILink
 

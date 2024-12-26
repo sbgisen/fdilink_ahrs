@@ -15,6 +15,7 @@ ahrsBringup::ahrsBringup()
   , mag_covariance_(0)
   , owned_ctx_(new IoContext(2))
   , serial_driver_(new drivers::serial_driver::SerialDriver(*owned_ctx_))
+  , updater_(this)
 {
   // topic_name & frame_id
   this->declare_parameter("debug", false);
@@ -25,6 +26,7 @@ ahrsBringup::ahrsBringup()
   this->declare_parameter("imu_topic_trueEast", "imu_trueEast");
   this->declare_parameter("mag_topic", "magnetic_field");
   this->declare_parameter("yaw_offset", -2.094);
+  this->declare_parameter("diagnostic_tolerance", 0.1);
   this->get_parameter("debug", if_debug_);
   this->get_parameter("device_type", device_type_);
   this->get_parameter("imu_topic", imu_topic_);
@@ -61,11 +63,21 @@ ahrsBringup::ahrsBringup()
   this->get_parameter("port", serial_port_);
   this->get_parameter("baud", serial_baud_);
   // publisher
-  imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(imu_topic_, 10);
+  auto imu_pub = this->create_publisher<sensor_msgs::msg::Imu>(imu_topic_, 10);
   imu_trueEast_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(imu_topic_trueEast_, 10);
   mag_pose_pub_ = this->create_publisher<geometry_msgs::msg::Pose2D>(mag_pose_2d_topic_, 10);
-  mag_pub_ = this->create_publisher<sensor_msgs::msg::MagneticField>(mag_topic_, 10);
+  auto mag_pub = this->create_publisher<sensor_msgs::msg::MagneticField>(mag_topic_, 10);
 
+  updater_.setHardwareID("ahrs");
+  auto tolerance = this->get_parameter("diagnostic_tolerance").as_double();
+  frequency_ = 100.0;
+
+  diagnosed_imu_publisher_ = std::make_shared<diagnostic_updater::DiagnosedPublisher<sensor_msgs::msg::Imu>>(
+    imu_pub, updater_, diagnostic_updater::FrequencyStatusParam(&frequency_, &frequency_, tolerance, 10),
+    diagnostic_updater::TimeStampStatusParam());
+  diagnosed_mag_publisher_ = std::make_shared<diagnostic_updater::DiagnosedPublisher<sensor_msgs::msg::MagneticField>>(
+    mag_pub, updater_, diagnostic_updater::FrequencyStatusParam(&frequency_, &frequency_, tolerance, 10),
+    diagnostic_updater::TimeStampStatusParam());
   // setp up serial
   try
   {
@@ -459,7 +471,7 @@ void ahrsBringup::processLoop()
       imu_data.linear_acceleration_covariance[0] = imu_accel_cov[0];
       imu_data.linear_acceleration_covariance[4] = imu_accel_cov[1];
       imu_data.linear_acceleration_covariance[8] = imu_accel_cov[2];
-      imu_pub_->publish(imu_data);
+      diagnosed_imu_publisher_->publish(imu_data);
       // true East heading publish ----
       tf2::Quaternion q_new;
       tf2::Quaternion q_orig(imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z,
@@ -519,7 +531,7 @@ void ahrsBringup::processLoop()
       mag.magnetic_field.y = magy;
       mag.magnetic_field.z = magz;
       std::fill(mag.magnetic_field_covariance.begin(), mag.magnetic_field_covariance.end(), mag_covariance_);
-      mag_pub_->publish(mag);
+      diagnosed_mag_publisher_->publish(mag);
     }
     rclcpp::spin_some(this->get_node_base_interface());
   }
