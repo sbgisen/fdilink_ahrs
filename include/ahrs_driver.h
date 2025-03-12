@@ -18,8 +18,10 @@
 #include <geometry_msgs/msg/pose2_d.hpp>
 #include <boost/thread.hpp>
 #include <string>
+#include <tf2/LinearMath/Quaternion.hpp>
 #include <crc_table.h>
 #include <tf2/LinearMath/Quaternion.h>
+#include <Eigen/Eigen>
 
 using namespace std;
 
@@ -102,6 +104,8 @@ private:
   // others
   double yaw_offset;
   tf2::Quaternion q_rot;
+  Eigen::Quaterniond initial_q_;
+  bool is_initialized_;
   double mag_offset_x_;
   double mag_offset_y_;
   double mag_offset_z_;

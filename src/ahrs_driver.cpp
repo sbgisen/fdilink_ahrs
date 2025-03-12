@@ -2,6 +2,7 @@
 #include <Eigen/Eigen>
 #include <memory>
 #include <rclcpp/executors.hpp>
+#include <tf2/LinearMath/Quaternion.hpp>
 #include "tf2/transform_datatypes.h"
 namespace FDILink
 {
@@ -16,6 +17,7 @@ ahrsBringup::ahrsBringup()
   , owned_ctx_(new IoContext(2))
   , serial_driver_(new drivers::serial_driver::SerialDriver(*owned_ctx_))
   , updater_(this)
+  , is_initialized_(false)
 {
   // topic_name & frame_id
   this->declare_parameter("debug", false);
@@ -450,7 +452,13 @@ void ahrsBringup::processLoop()
       }
       else if (device_type_ == 1)  // imu单品ROS标准下的坐标变换
       {
-        Eigen::Quaterniond q_out = q_z * q_rr * q_ahrs;
+        if (!is_initialized_)
+        {
+          initial_q_ = q_ahrs;
+          is_initialized_ = true;
+        }
+        Eigen::Quaterniond delta_q = initial_q_.inverse() * q_ahrs;
+        Eigen::Quaterniond q_out = q_z * q_rr * delta_q;
         imu_data.orientation.w = q_out.w();
         imu_data.orientation.x = q_out.x();
         imu_data.orientation.y = q_out.y();
