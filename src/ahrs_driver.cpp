@@ -18,6 +18,7 @@ ahrsBringup::ahrsBringup()
   , serial_driver_(new drivers::serial_driver::SerialDriver(*owned_ctx_))
   , updater_(this)
   , is_initialized_(false)
+  , publish_mag_pose_(false)
   , use_ned_(false)
 {
   // topic_name & frame_id
@@ -25,6 +26,7 @@ ahrsBringup::ahrsBringup()
   this->declare_parameter("device_type", 1);  // default: single imu
   this->declare_parameter("imu_topic", "imu");
   this->declare_parameter("imu_frame", "imu");
+  this->declare_parameter("publish_mag_pose", false);
   this->declare_parameter("use_ned", false);
   this->declare_parameter("mag_pose_2d_topic", "mag_pose_2d");
   this->declare_parameter("mag_topic", "magnetic_field");
@@ -34,6 +36,7 @@ ahrsBringup::ahrsBringup()
   this->get_parameter("device_type", device_type_);
   this->get_parameter("imu_topic", imu_topic_);
   this->get_parameter("imu_frame", imu_frame_id_);
+  this->get_parameter("publish_mag_pose", publish_mag_pose_);
   this->get_parameter("use_ned", use_ned_);
   this->get_parameter("mag_pose_2d_topic", mag_pose_2d_topic_);
   this->get_parameter("mag_topic", mag_topic_);
@@ -67,7 +70,10 @@ ahrsBringup::ahrsBringup()
   this->get_parameter("baud", serial_baud_);
   // publisher
   auto imu_pub = this->create_publisher<sensor_msgs::msg::Imu>(imu_topic_, 10);
-  mag_pose_pub_ = this->create_publisher<geometry_msgs::msg::Pose2D>(mag_pose_2d_topic_, 10);
+  if (publish_mag_pose_)
+  {
+    mag_pose_pub_ = this->create_publisher<geometry_msgs::msg::Pose2D>(mag_pose_2d_topic_, 10);
+  }
   auto mag_pub = this->create_publisher<sensor_msgs::msg::MagneticField>(mag_topic_, 10);
 
   updater_.setHardwareID("ahrs");
@@ -494,9 +500,6 @@ void ahrsBringup::processLoop()
       }
       diagnosed_imu_publisher_->publish(imu_data);
 
-      Eigen::Quaterniond rpy_q(imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y,
-                               imu_data.orientation.z);
-      geometry_msgs::msg::Pose2D pose_2d;
       double magx, magy, magz, roll, pitch;
       if (device_type_ == 0)
       {  // 未经变换的原始数据//
@@ -511,19 +514,12 @@ void ahrsBringup::processLoop()
         magx = imu_frame_.frame.data.data_pack.magnetometer_x;
         magy = imu_frame_.frame.data.data_pack.magnetometer_y;
         magz = imu_frame_.frame.data.data_pack.magnetometer_z;
-
-        Eigen::Vector3d EulerAngle = rpy_q.matrix().eulerAngles(2, 1, 0);
-        roll = EulerAngle[2];
-        pitch = EulerAngle[1];
       }
-
-      if (use_ned_)
+      if(use_ned_)
       {
         magx = magy;
         magy = magx;
         magz = -magz;
-        roll = pitch;
-        pitch = roll;
       }
 
       // Convert mG to T
@@ -533,11 +529,21 @@ void ahrsBringup::processLoop()
       magx -= mag_offset_x_;
       magy -= mag_offset_y_;
       magz -= mag_offset_z_;
+      if (publish_mag_pose_)
+      {
+        Eigen::Quaterniond rpy_q(imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y,
+                                imu_data.orientation.z);
 
-      double magyaw;
-      magCalculateYaw(roll, pitch, magyaw, magx, magy, magz);
-      pose_2d.theta = magyaw;
-      mag_pose_pub_->publish(pose_2d);
+        Eigen::Vector3d EulerAngle = rpy_q.matrix().eulerAngles(2, 1, 0);
+        roll = EulerAngle[2];
+        pitch = EulerAngle[1];
+        geometry_msgs::msg::Pose2D pose_2d;
+
+        double magyaw;
+        magCalculateYaw(roll, pitch, magyaw, magx, magy, magz);
+        pose_2d.theta = magyaw;
+        mag_pose_pub_->publish(pose_2d);
+      }
 
       sensor_msgs::msg::MagneticField mag;
       mag.header = imu_data.header;

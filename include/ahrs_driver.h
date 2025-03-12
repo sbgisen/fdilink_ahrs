@@ -106,6 +106,7 @@ private:
   tf2::Quaternion q_rot;
   Eigen::Quaterniond initial_q_;
   bool is_initialized_;
+  bool publish_mag_pose_;
   bool use_ned_;
   double mag_offset_x_;
   double mag_offset_y_;
