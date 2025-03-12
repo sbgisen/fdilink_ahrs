@@ -105,7 +105,7 @@ private:
   double yaw_offset;
   tf2::Quaternion q_rot;
   Eigen::Quaterniond initial_q_;
-  bool is_initialized_;
+  bool reset_orientation_;
   bool publish_mag_pose_;
   bool use_ned_;
   double mag_offset_x_;

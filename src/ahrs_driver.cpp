@@ -17,7 +17,7 @@ ahrsBringup::ahrsBringup()
   , owned_ctx_(new IoContext(2))
   , serial_driver_(new drivers::serial_driver::SerialDriver(*owned_ctx_))
   , updater_(this)
-  , is_initialized_(false)
+  , reset_orientation_(true)
   , publish_mag_pose_(false)
   , use_ned_(false)
 {
@@ -28,6 +28,7 @@ ahrsBringup::ahrsBringup()
   this->declare_parameter("imu_frame", "imu");
   this->declare_parameter("publish_mag_pose", false);
   this->declare_parameter("use_ned", false);
+  this->declare_parameter("reset_orientation", true);
   this->declare_parameter("mag_pose_2d_topic", "mag_pose_2d");
   this->declare_parameter("mag_topic", "magnetic_field");
   this->declare_parameter("yaw_offset", -2.094);
@@ -38,10 +39,12 @@ ahrsBringup::ahrsBringup()
   this->get_parameter("imu_frame", imu_frame_id_);
   this->get_parameter("publish_mag_pose", publish_mag_pose_);
   this->get_parameter("use_ned", use_ned_);
+  this->get_parameter("reset_orientation", reset_orientation_);
   this->get_parameter("mag_pose_2d_topic", mag_pose_2d_topic_);
   this->get_parameter("mag_topic", mag_topic_);
   this->get_parameter("yaw_offset", yaw_offset);
   q_rot.setRPY(0, 0, yaw_offset);
+  initial_q_ = Eigen::Quaterniond(1, 0, 0, 0);
   // sensor covariance setting
 
   this->declare_parameter("imu_mag_covVec",
@@ -446,10 +449,10 @@ void ahrsBringup::processLoop()
       }
       else if (device_type_ == 1)  // imu单品ROS标准下的坐标变换
       {
-        if (!is_initialized_)
+        if (reset_orientation_)
         {
           initial_q_ = q_ahrs;
-          is_initialized_ = true;
+          reset_orientation_ = false;
         }
         Eigen::Quaterniond delta_q = initial_q_.inverse() * q_ahrs;
         Eigen::Quaterniond q_out = delta_q;
