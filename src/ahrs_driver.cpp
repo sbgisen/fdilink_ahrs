@@ -23,19 +23,18 @@ ahrsBringup::ahrsBringup()
   this->declare_parameter("imu_topic", "imu");
   this->declare_parameter("imu_frame", "imu");
   this->declare_parameter("mag_pose_2d_topic", "mag_pose_2d");
-  this->declare_parameter("imu_topic_trueEast", "imu_trueEast");
   this->declare_parameter("mag_topic", "magnetic_field");
-  this->declare_parameter("yaw_offset", -2.094);
+  this->declare_parameter("yaw_offset", 0.0);
   this->declare_parameter("diagnostic_tolerance", 0.1);
   this->get_parameter("debug", if_debug_);
   this->get_parameter("device_type", device_type_);
   this->get_parameter("imu_topic", imu_topic_);
   this->get_parameter("imu_frame", imu_frame_id_);
   this->get_parameter("mag_pose_2d_topic", mag_pose_2d_topic_);
-  this->get_parameter("imu_topic_trueEast", imu_topic_trueEast_);
   this->get_parameter("mag_topic", mag_topic_);
   this->get_parameter("yaw_offset", yaw_offset);
-  q_rot.setRPY(0, 0, yaw_offset);
+  q_rot = Eigen::AngleAxisd(yaw_offset, Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
+          Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX());
   // sensor covariance setting
 
   this->declare_parameter("imu_mag_covVec",
@@ -64,7 +63,6 @@ ahrsBringup::ahrsBringup()
   this->get_parameter("baud", serial_baud_);
   // publisher
   auto imu_pub = this->create_publisher<sensor_msgs::msg::Imu>(imu_topic_, 10);
-  imu_trueEast_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(imu_topic_trueEast_, 10);
   mag_pose_pub_ = this->create_publisher<geometry_msgs::msg::Pose2D>(mag_pose_2d_topic_, 10);
   auto mag_pub = this->create_publisher<sensor_msgs::msg::MagneticField>(mag_topic_, 10);
 
@@ -423,18 +421,12 @@ void ahrsBringup::processLoop()
       imu_data.header.frame_id = imu_frame_id_;
       Eigen::Quaterniond q_ahrs(ahrs_frame_.frame.data.data_pack.Qw, ahrs_frame_.frame.data.data_pack.Qx,
                                 ahrs_frame_.frame.data.data_pack.Qy, ahrs_frame_.frame.data.data_pack.Qz);
-      Eigen::Quaterniond q_r = Eigen::AngleAxisd(PI, Eigen::Vector3d::UnitZ()) *
-                               Eigen::AngleAxisd(PI, Eigen::Vector3d::UnitY()) *
-                               Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX());
       Eigen::Quaterniond q_rr = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitZ()) *
                                 Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
                                 Eigen::AngleAxisd(PI, Eigen::Vector3d::UnitX());
       Eigen::Quaterniond q_z = Eigen::AngleAxisd(PI, Eigen::Vector3d::UnitZ()) *
                                Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
                                Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX());
-      Eigen::Quaterniond q_xiao_rr = Eigen::AngleAxisd(PI / 2.0, Eigen::Vector3d::UnitZ()) *
-                                     Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
-                                     Eigen::AngleAxisd(PI, Eigen::Vector3d::UnitX());
       if (device_type_ == 0)  // 未经变换的原始数据
       {
         imu_data.orientation.w = ahrs_frame_.frame.data.data_pack.Qw;
@@ -450,7 +442,7 @@ void ahrsBringup::processLoop()
       }
       else if (device_type_ == 1)  // imu单品ROS标准下的坐标变换
       {
-        Eigen::Quaterniond q_out = q_z * q_rr * q_ahrs;
+        Eigen::Quaterniond q_out = q_rot * q_z * q_rr * q_ahrs;
         imu_data.orientation.w = q_out.w();
         imu_data.orientation.x = q_out.x();
         imu_data.orientation.y = q_out.y();
@@ -472,22 +464,6 @@ void ahrsBringup::processLoop()
       imu_data.linear_acceleration_covariance[4] = imu_accel_cov[1];
       imu_data.linear_acceleration_covariance[8] = imu_accel_cov[2];
       diagnosed_imu_publisher_->publish(imu_data);
-      // true East heading publish ----
-      tf2::Quaternion q_new;
-      tf2::Quaternion q_orig(imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z,
-                             imu_data.orientation.w);
-      q_new = q_rot * q_orig;
-      q_new.normalize();
-
-      imu_trueEast_data.orientation.x = q_new.x();
-      imu_trueEast_data.orientation.y = q_new.y();
-      imu_trueEast_data.orientation.z = q_new.z();
-      imu_trueEast_data.orientation.w = q_new.w();
-      imu_trueEast_data.orientation_covariance = imu_data.orientation_covariance;
-      imu_trueEast_data.angular_velocity_covariance = imu_data.angular_velocity_covariance;
-      imu_trueEast_data.linear_acceleration_covariance = imu_data.linear_acceleration_covariance;
-      imu_trueEast_pub_->publish(imu_trueEast_data);
-      // ------------------------------
 
       Eigen::Quaterniond rpy_q(imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y,
                                imu_data.orientation.z);
