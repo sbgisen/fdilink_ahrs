@@ -63,7 +63,10 @@ ahrsBringup::ahrsBringup()
   this->get_parameter("baud", serial_baud_);
   // publisher
   auto imu_pub = this->create_publisher<sensor_msgs::msg::Imu>(imu_topic_, 10);
-  mag_pose_pub_ = this->create_publisher<geometry_msgs::msg::Pose2D>(mag_pose_2d_topic_, 10);
+
+  if (if_debug_) {
+    mag_pose_pub_ = this->create_publisher<geometry_msgs::msg::Pose2D>(mag_pose_2d_topic_, 10);
+  }
   auto mag_pub = this->create_publisher<sensor_msgs::msg::MagneticField>(mag_topic_, 10);
 
   updater_.setHardwareID("ahrs");
@@ -496,11 +499,12 @@ void ahrsBringup::processLoop()
       magy -= mag_offset_y_;
       magz -= mag_offset_z_;
 
-      double magyaw;
-      magCalculateYaw(roll, pitch, magyaw, magx, magy, magz);
-      pose_2d.theta = magyaw;
-      mag_pose_pub_->publish(pose_2d);
-
+      if (if_debug_) {
+        double magyaw;
+        magCalculateYaw(roll, pitch, magyaw, magx, magy, magz);
+        pose_2d.theta = magyaw;
+        mag_pose_pub_->publish(pose_2d);
+      }
       sensor_msgs::msg::MagneticField mag;
       mag.header = imu_data.header;
       mag.magnetic_field.x = magx;
