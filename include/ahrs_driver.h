@@ -20,6 +20,7 @@
 #include <string>
 #include <crc_table.h>
 #include <tf2/LinearMath/Quaternion.h>
+#include <Eigen/Eigen>
 
 using namespace std;
 
@@ -96,12 +97,11 @@ private:
   string imu_topic_, mag_pose_2d_topic_, imu_topic_trueEast_, mag_topic_;
 
   // Publisher
-  rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_trueEast_pub_;
   rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr mag_pose_pub_;
 
   // others
   double yaw_offset;
-  tf2::Quaternion q_rot;
+  Eigen::Quaterniond q_rot;
   double mag_offset_x_;
   double mag_offset_y_;
   double mag_offset_z_;
