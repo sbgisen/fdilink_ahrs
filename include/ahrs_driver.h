@@ -5,6 +5,7 @@
 #include <diagnostic_updater/publisher.hpp>
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <iostream>
 #include <sensor_msgs/msg/detail/imu__struct.hpp>
@@ -51,7 +52,7 @@ namespace FDILink
     0.05, 0.05, 0.05                                                                                                   \
   }
 
-class ahrsBringup : public rclcpp::Node
+class ahrsBringup : public rclcpp_lifecycle::LifecycleNode
 {
 public:
   ahrsBringup();
@@ -61,7 +62,15 @@ public:
   bool checkCS16(int len);
   void checkSN(int type);
   void magCalculateYaw(double roll, double pitch, double& magyaw, double magx, double magy, double magz);
-  rcl_interfaces::msg::SetParametersResult parameterCallback(const std::vector<rclcpp::Parameter>& parameters);
+  rcl_interfaces::msg::SetParametersResult parameterCallback(const std::vector<rclcpp::Parameter> & parameters);
+  void autoRecoveryTrigger();
+
+  using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
+  auto on_configure(const rclcpp_lifecycle::State & previous_state) -> CallbackReturn override;
+  auto on_activate(const rclcpp_lifecycle::State & previous_state) -> CallbackReturn override;
+  auto on_deactivate(const rclcpp_lifecycle::State & previous_state) -> CallbackReturn override;
+  auto on_cleanup(const rclcpp_lifecycle::State & previous_state) -> CallbackReturn override;
+  auto on_error(const rclcpp_lifecycle::State & previous_state) -> CallbackReturn override;
 
 private:
   OnSetParametersCallbackHandle::SharedPtr parameter_handler_;
@@ -96,6 +105,9 @@ private:
   // topic
   string imu_topic_, mag_pose_2d_topic_, imu_topic_trueEast_, mag_topic_;
 
+  rclcpp::TimerBase::SharedPtr update_timer_;
+  rclcpp::TimerBase::SharedPtr auto_recovery_timer_;
+
   // Publisher
   rclcpp::Publisher<geometry_msgs::msg::Pose2D>::SharedPtr mag_pose_pub_;
 
@@ -106,6 +118,7 @@ private:
   double mag_offset_y_;
   double mag_offset_z_;
   double mag_covariance_;
+  int consecutive_read_failures_;
 
   double frequency_;
   diagnostic_updater::Updater updater_;
