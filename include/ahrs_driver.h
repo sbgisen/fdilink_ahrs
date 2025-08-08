@@ -105,7 +105,6 @@ private:
   // topic
   string imu_topic_, mag_pose_2d_topic_, imu_topic_trueEast_, mag_topic_;
 
-  rclcpp::TimerBase::SharedPtr update_timer_;
   rclcpp::TimerBase::SharedPtr auto_recovery_timer_;
 
   // Publisher
@@ -119,6 +118,9 @@ private:
   double mag_offset_z_;
   double mag_covariance_;
   int consecutive_read_failures_;
+
+  std::thread process_thread_;
+  bool join_requested_;
 
   double frequency_;
   diagnostic_updater::Updater updater_;
