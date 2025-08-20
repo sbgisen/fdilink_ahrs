@@ -120,7 +120,7 @@ private:
   int consecutive_read_failures_;
 
   std::thread process_thread_;
-  bool join_requested_;
+  bool recovery_requested_;
 
   double frequency_;
   diagnostic_updater::Updater updater_;

@@ -18,7 +18,7 @@ ahrsBringup::ahrsBringup()
   serial_driver_(new drivers::serial_driver::SerialDriver(*owned_ctx_)),
   updater_(this),
   consecutive_read_failures_(0),
-  join_requested_(false)
+  recovery_requested_(false)
 {
   // topic_name & frame_id
   this->declare_parameter("debug", false);
@@ -130,7 +130,7 @@ auto ahrsBringup::on_activate(const rclcpp_lifecycle::State & /*previous_state*/
 auto ahrsBringup::on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/) -> ahrsBringup::CallbackReturn
 {
   RCLCPP_INFO(this->get_logger(), "Deactivating ahrsBringup, stopping data reading.");
-  join_requested_ = true;
+  recovery_requested_ = true;
   if (process_thread_.joinable()) {
     process_thread_.join();
   }
@@ -144,14 +144,14 @@ auto ahrsBringup::on_cleanup(const rclcpp_lifecycle::State & /*previous_state*/)
     serial_driver_->port()->close();
   }
   consecutive_read_failures_ = 0;
-  join_requested_ = false;
+  recovery_requested_ = false;
   return ahrsBringup::CallbackReturn::SUCCESS;
 }
 
 auto ahrsBringup::on_error(const rclcpp_lifecycle::State & /*previous_state*/) -> ahrsBringup::CallbackReturn
 {
   RCLCPP_ERROR(this->get_logger(), "An error occurred in the ahrsBringup.");
-  join_requested_ = true;
+  recovery_requested_ = true;
   if (process_thread_.joinable()) {
     process_thread_.join();
   }
@@ -192,11 +192,11 @@ rcl_interfaces::msg::SetParametersResult ahrsBringup::parameterCallback(const st
 
 void ahrsBringup::processLoop()
 {
-  while (rclcpp::ok() && !join_requested_) {
+  while (rclcpp::ok() && !recovery_requested_) {
     try {
       if (!serial_driver_->port()->is_open() && get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
         RCLCPP_WARN(this->get_logger(), "serial unopen");
-        join_requested_ = true;
+        recovery_requested_ = true;
         return;
       }
       // check head start
@@ -526,7 +526,7 @@ void ahrsBringup::processLoop()
       }
     } catch (const std::exception & e) {
       RCLCPP_WARN(this->get_logger(), "Exception caught: %s", e.what());
-      join_requested_ = true;
+      recovery_requested_ = true;
       return;
     }
   }
@@ -630,13 +630,13 @@ auto ahrsBringup::autoRecoveryTrigger() -> void
       trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE);
     }
   } else if (get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE) {
-    if (consecutive_read_failures_ > 0 || join_requested_) {
+    if (recovery_requested_) {
       trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_CLEANUP);
     } else {
       trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_ACTIVATE);
     }
   } else if (get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
-    if (consecutive_read_failures_ > this->get_parameter("max_consecutive_read_failures").as_int() || join_requested_) {
+    if (consecutive_read_failures_ > this->get_parameter("max_consecutive_read_failures").as_int() || recovery_requested_) {
       trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_DEACTIVATE);
     }
   }
