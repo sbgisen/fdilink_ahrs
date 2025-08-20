@@ -19,6 +19,7 @@
   <depend>diagnostic_updater</depend>
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
   <depend>sensor_msgs</depend>
   <depend>serial_driver</depend>
   <depend>std_msgs</depend>
